@@ -3,4 +3,7 @@ DOC/
 *.pcbdoc_viewstate
 *.pdf
 *.metadata/
-AT Command/
+*.bin
+*.BM
+*.dbg
+*.rpt
