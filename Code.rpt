@@ -1,6 +1,6 @@
 Report       : Code
 Date         : 05-16-2023
-Time         : 11:28:04
+Time         : 12:37:07
 
 Compiler     : BASCOM-AVR LIBRARY V 1.11.9.8
 Processor    : M8
@@ -8,9 +8,9 @@ SRAM         : 400 hex
 EEPROM       : 200 hex
 ROMSIZE      : 2000 hex
 
-ROMIMAGE     : 43C hex  -> Will fit into ROM
-ROMIMAGE     :  1084 dec
-FLASH USED   :  13  %
+ROMIMAGE     : 504 hex  -> Will fit into ROM
+ROMIMAGE     :  1284 dec
+FLASH USED   :  15  %
 BAUD         : 9600 Baud
 XTAL         : 8000000 Hz
 BAUD error   : 0.16%
@@ -21,7 +21,7 @@ S-Stacksize  : 8 hex
 S-Stackstart : 440 hex
 Framesize    : 18 hex
 Framestart   : 427 hex
-Space left   :  153  dec
+Space left   :  17  dec
 
 LCD DB7      : PORTB.7
 LCD DB6      : PORTB.6
@@ -67,6 +67,11 @@ S                                Word (400)        0060          96
 T                                Word              0380          896 
 I                                Word              0382          898 
 TIME_COUNT                       Word              0384          900 
+RF_DATA                          Word (50)         0386          902 
+REMODE_ID_S                      String            03EA          1002 
+REMOTE_ID                        Long              03FF          1023 
+REMOTE_DATA_S                    String            0403          1027 
+REMOTE_DATA                      Long              040A          1034 
 
 --------------------------------------------------------------------------------
 Constant                         Value
@@ -432,5 +437,8 @@ COUNTER2                         not used
 COMPARE2                         not used
 ADCD                             not used
 COMPARE1                         not used
-TIME_COUNT                       not used
+S                                not used
+T                                not used
+REMODE_ID_S                      not used
+REMOTE_DATA_S                    not used
 

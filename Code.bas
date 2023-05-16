@@ -36,14 +36,60 @@ Dim T As Word
 
 Dim I As Word
 Dim Time_count As Word
-Dim Rf_data(30) As Word
+Dim Rf_data(50) As Word
 Dim Remode_id_s As String * 20
 Dim Remote_id As Long
 Dim Remote_data_s As String * 6
 Dim Remote_data As Long
 '*****************************
+
+'(
 Do
-      Gosub Read_rf
+
+   If Key = 1 Then
+      For I = 1 To 300
+      T = 0
+      Do : Reset Watchdog : Incr T : Waitus 5 : Loop Until _in = 1
+      S(i) = T
+
+      Incr I
+      T = 0
+      Do : Reset Watchdog : Incr T : Waitus 5 : Loop Until _in = 0
+      S(i) = T
+      Next I
+
+      Print #1 , "Satart "
+      For I = 1 To 400
+         T = 0
+         Do
+            Incr T
+            Waitus 5
+         Loop Until _in = 1
+         S(i) = T
+
+         Incr I
+
+         T = 0
+         Do
+            Incr T
+            Waitus 5
+         Loop Until _in = 0
+         S(i) = T
+      Next I
+
+      For I = 1 To 400
+         Print #1 , I ; ") " ; S(i)
+      Next I
+   End If
+
+
+Loop
+')
+
+
+Do
+   Gosub Read_rf
+   Reset Watchdog
 Loop
 '*****************************
 Read_rf:
@@ -54,6 +100,7 @@ Read_rf:
       Do : Reset Watchdog : Incr Time_count : Waitus 5 : Loop Until _in = 1
 
       If Time_count > 1550 And Time_count < 1950 Then
+
          I = 1
          Do
             If _in = 1 Then
@@ -62,7 +109,7 @@ Read_rf:
                Rf_data(i) = Time_count
                Incr I
             End If
-         Loop Until I = 24
+         Loop Until I > 24
 
          For I = 1 To 24
             If Rf_data(i) > 30 And Rf_data(i) < 85 Then
@@ -71,6 +118,7 @@ Read_rf:
                If Rf_data(i) > 130 And Rf_data(i) < 200 Then
                   Rf_data(i) = 1
                Else
+                  Print #1 , I ; ")" ; Rf_data(i)
                   Remote_id = 0
                   Remote_data = 0
                   Return
@@ -83,57 +131,12 @@ Read_rf:
             Print #1 , Rf_data(i);
          Next I
          Print #1 ,
+         Waitms 200
 
       End If
    End If
 Return
 '*****************************
-
-         For I = 1 To 24
-            Reset Watchdog
-            If S(i) >= 120 And S(i) <= 350 Then
-               S(i) = 0
-            Else
-               If S(i) >= 400 And S(i) <= 850 Then
-                  S(i) = 1
-               Else
-                  I = 0
-                  Address = 0
-                  Code = 0
-                  Return
-               End If
-            End If
-         Next         Do
-            If _in = 1 Then
-               Timer1 = 0
-               Start Timer1
-               While _in = 1
-                  Reset Watchdog
-               Wend
-               Stop Timer1
-               Incr I
-               S(i) = Timer1
-            End If
-            Reset Watchdog
-            If I = 24 Then Exit Do
-         Loop
-
-         For I = 1 To 24
-            Reset Watchdog
-            If S(i) >= 120 And S(i) <= 350 Then
-               S(i) = 0
-            Else
-               If S(i) >= 400 And S(i) <= 850 Then
-                  S(i) = 1
-                  Else
-                  I = 0
-                  Address = 0
-                  Code = 0
-                  Return
-               End If
-            End If
-         Next
-
 
 
 
