@@ -1,0 +1,4 @@
+Error : 46    Line :   101   Assignment error [ADDRESS: 0   0: 112]  , in File : C:\Users\OpS\Desktop\Rf RGB controler\Code.bas
+Error : 46    Line :   102   Assignment error [CODE: 0   0: 112]  , in File : C:\Users\OpS\Desktop\Rf RGB controler\Code.bas
+Error : 7     Line :   102   IF THEN expected [ 102]  , in File : C:\Users\OpS\Desktop\Rf RGB controler\Code.bas
+Error : 123   Line :   102   END IF expected  , in File : C:\Users\OpS\Desktop\Rf RGB controler\Code.bas
