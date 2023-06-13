@@ -1,11 +1,14 @@
 $regfile = "M8def.dat"
-$crystal = 8000000
+$crystal = 11059200
 '*****************************
 Open "comb.5:9600,8,n,1" For Output As #1
 Enable Interrupts
 '*****************************
 Config Watchdog = 2048
 Stop Watchdog
+'*****************************
+Config Adc = Single , Prescaler = Auto , Reference = Avcc
+Start Adc
 '*****************************
 Config Timer1 = Pwm , Prescale = 8 , Pwm = 8 , Compare A Pwm = Clear Down , Compare B Pwm = Clear Down
 Enable Timer1
@@ -20,24 +23,23 @@ Ocr1a = 0
 Ocr1b = 0
 Ocr2 = 0
 '*****************************
-_in Alias Pinc.1
-Key Alias Pinc.4
-Ferq Alias Portc.3
+_in Alias Pind.7
+Key_learn Alias Pind.4
+Led_power Alias Portd.2
+Led_learn Alias Portd.1
+Voltage_trigger Alias Pind.3
 
 Config _in = Input
-Config Key = Input
-Config Ferq = Output
-'*****************************
-Config Timer0 = Timer , Prescale = 1
-Enable Timer0
-Stop Timer0
+Config Key_learn = Input
+Config Led_power = Output
+Config Led_learn = Output
+Config Voltage_trigger = Input
 '*****************************
 Dim I As Word
-
-Dim Led_r As Byte
-Dim Led_g As Byte
-Dim Led_b As Byte
-Dim Led As Byte
+Dim Ii As Word
+Dim Pwmm As Word
+Dim Flag As Byte
+Dim Adcc As Word
 
 Dim Time_count As Word
 Dim Rf_data(50) As Word
@@ -46,107 +48,36 @@ Dim Remote_data As String * 30
 
 Dim Save_id As String * 30
 Dim Eram_save_id As Eram String * 30
+Dim Eram_pwmm As Eram Word
+Dim Eram_flag As Eram Byte
+
 Save_id = Eram_save_id
 
 Const Key_debounce = 300
+Dim Data_save(301) As Word
 '*****************************
-Led_r = 1
-Led_g = 1
-Led_b = 1
-'(
-Do
-   For I = 1 To 255
-      ocr1a=i
-      Ocr1b = I
-      Ocr2 = I
-      Waitms 10
-   Next I
-
-Loop
-')
+Print #1 , "Save ID is :" ; Save_id
+Flag = Eram_flag
+Pwmm = Eram_pwmm
+If Flag = 1 Then Ocr1a = Pwmm
+Led_power = 1
 Do
    Gosub Read_rf
-   Reset Watchdog
-
-   If Remote_data = "00000011" Then
-      If Led_r < 5 Then Incr Led_r Else Led_r = 1
-      Led = Led_r * 51
-      Ocr1a = Led
-      Waitms Key_debounce
-   End If
-   If Remote_data = "00001100" Then
-      If Led_r > 1 Then Decr Led_r Else Led_r = 5
-      Led = Led_r * 51
-      Ocr1a = Led
-      Waitms Key_debounce
-   End If
-   If Remote_data = "00001111" Then
-      Led_r = 5
-      Led = Led_r * 51
-      Ocr1a = Led
-      Waitms Key_debounce
-   End If
-   If Remote_data = "00110000" Then
-      Led_r = 0
-      Led = Led_r * 51
-      Ocr1a = Led
-      Waitms Key_debounce
+   Reset Watchdog       
+   Adcc = Getadc(1)
+   If Adcc < 450 Then
+      Led_power = 0
+      Eram_flag = Flag
+      Eram_pwmm = Pwmm
+      Print #1 , "Save Data"
+      Waitms 500
+      Do
+         Reset Watchdog
+         Waitms 10
+         Adcc = Getadc(1)
+      Loop Until Adcc > 500
    End If
 
-
-
-   If Remote_data = "00110011" Then
-      If Led_g < 5 Then Incr Led_g Else Led_g = 1
-      Led = Led_g * 51
-      Ocr1b = Led
-      Waitms Key_debounce
-   End If
-   If Remote_data = "00111100" Then
-      If Led_g > 1 Then Decr Led_g Else Led_g = 5
-      Led = Led_g * 51
-      Ocr1b = Led
-      Waitms Key_debounce
-   End If
-   If Remote_data = "00111111" Then
-      Led_g = 5
-      Led = Led_g * 51
-      Ocr1b = Led
-      Waitms Key_debounce
-   End If
-   If Remote_data = "11000000" Then
-      Led_g = 0
-      Led = Led_g * 51
-      Ocr1b = Led
-      Waitms Key_debounce
-   End If
-
-
-
-   If Remote_data = "11000011" Then
-      If Led_b < 5 Then Incr Led_b Else Led_b = 1
-      Led = Led_b * 51
-      ocr2 = Led
-      Waitms Key_debounce
-   End If
-   If Remote_data = "11001100" Then
-      If Led_b > 1 Then Decr Led_b Else Led_b = 5
-      Led = Led_b * 51
-      Ocr2 = Led
-      Waitms Key_debounce
-   End If
-   If Remote_data = "11001111" Then
-      Led_b = 5
-      Led = Led_b * 51
-      Ocr2 = Led
-      Waitms Key_debounce
-   End If
-   If Remote_data = "11110000" Then
-      Led_b = 0
-      Led = Led_b * 51
-      Ocr2 = Led
-      Print #1 , Led_R ; "  " ; Led_G ; "  " ; Led_B
-      Waitms Key_debounce
-   End If
 Loop
 '*****************************
 Read_rf:
@@ -158,7 +89,9 @@ Read_rf:
       Time_count = 0
       Do : Incr Time_count : Waitus 5 : Loop Until _in = 1
 
-      If Time_count > 1550 And Time_count < 1950 Then
+
+      If Time_count > 1550 And Time_count < 2100 Then       '1550   1950
+         Led_learn = 1
          Remote_id = ""
          I = 1
          Do
@@ -172,11 +105,11 @@ Read_rf:
          Loop Until I > 24
 
          For I = 1 To 24
-            If Rf_data(i) > 30 And Rf_data(i) < 85 Then
+            If Rf_data(i) > 45 And Rf_data(i) < 95 Then
                Rf_data(i) = 0
                Remote_id = Remote_id + "0"
             Else
-               If Rf_data(i) > 130 And Rf_data(i) < 200 Then
+               If Rf_data(i) > 140 And Rf_data(i) < 220 Then
                   Rf_data(i) = 1
                   Remote_id = Remote_id + "1"
                Else
@@ -190,29 +123,44 @@ Read_rf:
 
          Remote_data = Right(remote_id , 8)
          Remote_id = Left(remote_id , 8)
-         'Print #1 , "ID=" ; Remote_id ; "  Data=" ; Remote_data
+         'Print #1 , "ID=" ; Remote_id ; "  Data=" ; Remote_data ; "   " ; Key_learn
 
-         If Save_id = Remote_id Then                        'Check identity
-            'Print #1 , "Data=" ; Remote_data
-         Else
-            Remote_data = ""
-         End If
-
-
-         If Key = 1 Then                                    'Save new Remote
+         If Pind.4 = 1 Then                                 'Save new Remote
             Save_id = Remote_id
             Eram_save_id = Remote_id
             Waitms 10
 
             Print #1 , "Saved"
             Print #1 , "ID=" ; Remote_id ; "  Data=" ; Remote_data
+            Led_learn = 1
+            Waitms 100
             Do
                Reset Watchdog
                Waitms 10
-            Loop Until Key = 0
-            Waitms 100
+            Loop Until Key_learn = 0
          End If
+
+         If Save_id = Remote_id Then
+            If Remote_data = "00000011" Then Flag = 1
+            If Remote_data = "00001100" Then Flag = 0
+
+            If Remote_data = "00001111" Then Pwmm = 25
+            If Remote_data = "00110000" Then Pwmm = 51
+            If Remote_data = "00110011" Then Pwmm = 76
+            If Remote_data = "00111100" Then Pwmm = 102
+            If Remote_data = "00111111" Then Pwmm = 127
+            If Remote_data = "11000000" Then Pwmm = 153
+            If Remote_data = "11000011" Then Pwmm = 178
+            If Remote_data = "11001100" Then Pwmm = 204
+            If Remote_data = "11001111" Then Pwmm = 229
+            If Remote_data = "11110000" Then Pwmm = 255
+
+            If Flag = 1 Then Ocr1a = Pwmm Else Ocr1a = 0
+         End If
+
       End If
+
+      Led_learn = 0
    End If
 Return
 '*****************************
