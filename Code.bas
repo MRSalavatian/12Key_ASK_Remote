@@ -8,7 +8,7 @@ Config Watchdog = 2048
 Stop Watchdog
 '*****************************
 Config Adc = Single , Prescaler = Auto , Reference = Avcc
-start adc
+Start Adc
 '*****************************
 Config Timer1 = Pwm , Prescale = 8 , Pwm = 8 , Compare A Pwm = Clear Down , Compare B Pwm = Clear Down
 Enable Timer1
@@ -135,16 +135,15 @@ Do
       If Remote_data = "11001111" And B_pwm <= 204 Then B_pwm = B_pwm + 51
       If Remote_data = "11110000" And B_pwm => 102 Then B_pwm = B_pwm - 51
 
-      Ocr1a = R_pwm
-      Ocr1b = G_pwm
-      Ocr2 = B_pwm
+      If R_flag = 1 Then Ocr1a = R_pwm Else Ocr1a = 0
+      If G_flag = 1 Then Ocr1b = G_pwm Else Ocr1b = 0
+      If B_flag = 1 Then Ocr2 = B_pwm Else Ocr2 = 0
       Flag = 0
       Waitms 300
    End If
 
    Adcc = Getadc(1)
-   If Adcc < 450 Then
-      Print #1 , Adcc
+   If Adcc < 450 Then    
       Led_power = 0
       Ocr1a = 0
       Ocr2 = 0
