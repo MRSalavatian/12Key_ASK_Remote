@@ -7,6 +7,9 @@ Enable Interrupts
 Config Watchdog = 2048
 Stop Watchdog
 '*****************************
+Config Adc = Single , Prescaler = Auto , Reference = Avcc
+start adc
+'*****************************
 Config Timer1 = Pwm , Prescale = 8 , Pwm = 8 , Compare A Pwm = Clear Down , Compare B Pwm = Clear Down
 Enable Timer1
 Enable Interrupts
@@ -31,6 +34,7 @@ Config Key_learn = Input
 Config Led_power = Output
 Config Led_learn = Output
 Config Voltage_trigger = Input
+Config Portd.3 = Input
 '*****************************
 Config Timer0 = Timer , Prescale = 1
 Enable Timer0
@@ -76,6 +80,7 @@ If Key_learn = 1 Then                                       'reset eeprom
    Eram_g_flag = 1 : Waitms 100
    Eram_b_flag = 1 : Waitms 100
 
+   Led_power = 1
    Do
       Reset Watchdog
       Waitms 100
@@ -97,6 +102,7 @@ B_flag = Eram_b_flag
 Save_id = Eram_save_id
 Const Key_debounce = 300
 '*****************************
+Waitms 500
 Print #1 , "Save ID is :" ; Save_id
 Print #1 , "R PWM= " ; R_pwm ; "   Flag=" ; R_flag
 Print #1 , "R PWM= " ; G_pwm ; "   Flag=" ; G_flag
@@ -138,6 +144,7 @@ Do
 
    Adcc = Getadc(1)
    If Adcc < 450 Then
+      Print #1 , Adcc
       Led_power = 0
       Ocr1a = 0
       Ocr2 = 0
@@ -151,7 +158,8 @@ Do
       Eram_b_flag = B_flag : Waitms 10
 
       Print #1 , "Save Data"
-      Waitms 500
+      Led_power = 1
+      Led_learn = 0
       Do
          Reset Watchdog
          Waitms 100
@@ -159,6 +167,7 @@ Do
          Toggle Led_learn
          Toggle Led_power
       Loop Until Adcc > 500
+      Led_learn = 0
    End If
 
 Loop
