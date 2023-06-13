@@ -1,5 +1,5 @@
 $regfile = "M8def.dat"
-$crystal = 1159200
+$crystal = 11059200
 '*****************************
 Open "comb.5:9600,8,n,1" For Output As #1
 Enable Interrupts
@@ -66,15 +66,23 @@ Dim Save_id As String * 30
 Dim Eram_save_id As Eram String * 30
 
 
-If Key_learn = 1 Then
+If Key_learn = 1 Then                                       'reset eeprom
    Led_learn = 1
    Led_power = 1
-   Eram_r_pwm = 1 : Waitms 100
-   Eram_g_pwm = 1 : Waitms 100
-   Eram_b_pwm = 1 : Waitms 100
+   Eram_r_pwm = 51 : Waitms 100
+   Eram_g_pwm = 51 : Waitms 100
+   Eram_b_pwm = 51 : Waitms 100
    Eram_r_flag = 1 : Waitms 100
    Eram_g_flag = 1 : Waitms 100
    Eram_b_flag = 1 : Waitms 100
+
+   Do
+      Reset Watchdog
+      Waitms 100
+      Toggle Led_learn
+      Toggle Led_power
+   Loop Until Key_learn = 0
+
    Led_learn = 0
    Led_power = 0
 End If
@@ -94,19 +102,53 @@ Print #1 , "R PWM= " ; R_pwm ; "   Flag=" ; R_flag
 Print #1 , "R PWM= " ; G_pwm ; "   Flag=" ; G_flag
 Print #1 , "R PWM= " ; B_pwm ; "   Flag=" ; B_flag
 
-
 If R_flag = 1 Then Ocr1a = R_pwm
 If G_flag = 1 Then Ocr1b = G_pwm
 If B_flag = 1 Then Ocr2 = B_pwm
 Led_power = 1
+Led_learn = 0
 Do
-   'Gosub Read_rf
+   Gosub Read_rf
    Reset Watchdog
+
+
+
+   If Flag = 1 Then
+      If Remote_data = "00000011" Then R_flag = 1
+      If Remote_data = "00001100" Then R_flag = 0
+      If Remote_data = "00001111" And R_pwm <= 204 Then R_pwm = R_pwm + 51
+      If Remote_data = "00110000" And R_pwm => 102 Then R_pwm = R_pwm - 51
+
+      If Remote_data = "00110011" Then G_flag = 1
+      If Remote_data = "00111100" Then G_flag = 0
+      If Remote_data = "00111111" And G_pwm <= 204 Then G_pwm = G_pwm + 51
+      If Remote_data = "11000000" And G_pwm => 102 Then G_pwm = G_pwm - 51
+
+      If Remote_data = "11000011" Then B_flag = 1
+      If Remote_data = "11001100" Then B_flag = 0
+      If Remote_data = "11001111" And B_pwm <= 204 Then B_pwm = B_pwm + 51
+      If Remote_data = "11110000" And B_pwm => 102 Then B_pwm = B_pwm - 51
+
+      Ocr1a = R_pwm
+      Ocr1b = G_pwm
+      Ocr2 = B_pwm
+      Flag = 0
+      Waitms 300
+   End If
 
    Adcc = Getadc(1)
    If Adcc < 450 Then
       Led_power = 0
+      Ocr1a = 0
+      Ocr2 = 0
+      Ocr1b = 0
 
+      Eram_r_pwm = R_pwm : Waitms 10
+      Eram_g_pwm = G_pwm : Waitms 10
+      Eram_b_pwm = B_pwm : Waitms 10
+      Eram_r_flag = R_flag : Waitms 10
+      Eram_g_flag = G_flag : Waitms 10
+      Eram_b_flag = B_flag : Waitms 10
 
       Print #1 , "Save Data"
       Waitms 500
@@ -121,8 +163,6 @@ Do
 
 Loop
 '*****************************
-'(
-
 Read_rf:
    Remote_data = ""
    Remote_id = ""
@@ -183,23 +223,7 @@ Read_rf:
             Loop Until Key_learn = 0
          End If
 
-         If Save_id = Remote_id Then
-            If Remote_data = "00000011" Then Flag = 1
-            If Remote_data = "00001100" Then Flag = 0
-
-            If Remote_data = "00001111" Then Pwmm = 25
-            If Remote_data = "00110000" Then Pwmm = 51
-            If Remote_data = "00110011" Then Pwmm = 76
-            If Remote_data = "00111100" Then Pwmm = 102
-            If Remote_data = "00111111" Then Pwmm = 127
-            If Remote_data = "11000000" Then Pwmm = 153
-            If Remote_data = "11000011" Then Pwmm = 178
-            If Remote_data = "11001100" Then Pwmm = 204
-            If Remote_data = "11001111" Then Pwmm = 229
-            If Remote_data = "11110000" Then Pwmm = 255
-
-            If Flag = 1 Then Ocr1a = Pwmm Else Ocr1a = 0
-         End If
+         If Save_id = Remote_id Then Flag = 1
 
       End If
 
@@ -207,4 +231,3 @@ Read_rf:
    End If
 Return
 '*****************************
-')
