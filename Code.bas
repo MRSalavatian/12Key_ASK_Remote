@@ -143,7 +143,7 @@ Do
    End If
 
    Adcc = Getadc(1)
-   If Adcc < 450 Then    
+   If Adcc < 450 Then
       Led_power = 0
       Ocr1a = 0
       Ocr2 = 0
@@ -213,7 +213,7 @@ Read_rf:
          Next I
 
          Remote_data = Right(remote_id , 8)
-         Remote_id = Left(remote_id , 8)
+         Remote_id = Left(remote_id , 16)
          'Print #1 , "ID=" ; Remote_id ; "  Data=" ; Remote_data ; "   " ; Key_learn
 
          If Pind.4 = 1 Then                                 'Save new Remote
