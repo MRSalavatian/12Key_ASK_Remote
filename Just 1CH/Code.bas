@@ -5,7 +5,7 @@ Open "comb.5:9600,8,n,1" For Output As #1
 Enable Interrupts
 '*****************************
 Config Watchdog = 2048
-Stop Watchdog
+Start Watchdog
 '*****************************
 Config Adc = Single , Prescaler = Auto , Reference = Avcc
 Start Adc
@@ -60,10 +60,20 @@ Print #1 , "Save ID is :" ; Save_id
 Flag = Eram_flag
 Pwmm = Eram_pwmm
 If Flag = 1 Then Ocr1a = Pwmm
+
 Led_power = 1
+For I = 1 To 10
+   Toggle Led_learn
+   Toggle Led_power
+   Waitms 50
+   Reset Watchdog
+Next I
+Led_power = 1
+Led_learn = 0
+
 Do
    Gosub Read_rf
-   Reset Watchdog       
+   Reset Watchdog
    Adcc = Getadc(1)
    If Adcc < 450 Then
       Led_power = 0
@@ -73,8 +83,9 @@ Do
       Waitms 500
       Do
          Reset Watchdog
-         Waitms 10
+         Waitms 100
          Adcc = Getadc(1)
+         Toggle Led_learn
       Loop Until Adcc > 500
    End If
 
@@ -122,10 +133,11 @@ Read_rf:
          Next I
 
          Remote_data = Right(remote_id , 8)
-         Remote_id = Left(remote_id , 8)
+         Remote_id = Left(remote_id , 16)
          'Print #1 , "ID=" ; Remote_id ; "  Data=" ; Remote_data ; "   " ; Key_learn
 
-         If Pind.4 = 1 Then                                 'Save new Remote
+
+         If Key_learn = 1 Then                              'Save new Remote
             Save_id = Remote_id
             Eram_save_id = Remote_id
             Waitms 10
@@ -160,7 +172,7 @@ Read_rf:
 
       End If
 
-      Led_learn = 0
    End If
+      Led_learn = 0
 Return
 '*****************************
